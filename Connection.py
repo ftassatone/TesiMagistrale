@@ -26,7 +26,7 @@ result = database.collection.aggregate([
 ])
 
 for item in result:
-    print(item)
+    #print(item)
 
 
 
