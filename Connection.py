@@ -1,8 +1,12 @@
 from pymongo import MongoClient
 import csv
+import numpy as np
 
 #connessione in local a mongoDB
-client = MongoClient('localhost', 27017)
+#client = MongoClient('localhost', 27017)
+from pymongo.errors import BulkWriteError
+
+client = MongoClient("mongodb+srv://admin:admin@tesifrancescatassatone.jlr3s.gcp.mongodb.net/dataset_covid?retryWrites=true&w=majority")
 print("Connessione stabilita")
 
 #accesso al databaset e alla collezione interessata
@@ -14,26 +18,40 @@ regionList = []
 regionIndex = []
 provinceList = []
 provinceIndex = []
-newline = ''
 
-with open('innovators.csv', 'w', ',') as file:
-    writer = csv.writer(file)
-    writer.writerow(["SN", "Name", "Contribution"])
-    writer.writerow([1, "Linus Torvalds", "Linux Kernel"])
-    writer.writerow([2, "Tim Berners-Lee", "World Wide Web"])
-    writer.writerow([3, "Guido van Rossum", "Python Programming"])
 
-for itemRegion in collectionRegion.find({}):
+for itemRegion in collectionRegion.find({},{'_id': False}):
    regionList.append(itemRegion)
    regionIndex.append(itemRegion["RegionName"])
 
-for itemProvince in collectionRegion.find({}):
+for itemProvince in collectionProvince.find({},{'_id': False}):
    provinceList.append(itemProvince)
    provinceIndex.append(itemProvince["RegionName"])
 
+#se la collezione myOut esiste, la elimino e successivamente la ricreo
+myOut = db["myOut"]
+if "myOut" in db.list_collection_names():
+    myOut.drop()
+    print("Collection eliminata")
+db.create_collection("myOut")
+print("Collection creata")
 
+#implementazione match regioni
+arrReg = []
+arrProv = []
 
 for item in regionIndex:
-    for itemProvince in provinceIndex:
-        if item == itemProvince:
-            print(item, "-", itemProvince)
+    flag = True
+    for item2 in provinceIndex:
+        if item == item2:
+            if flag == True:
+                reg = regionIndex.index(item)
+                arrReg.append(regionList[reg])
+                flag = False
+            prov = provinceIndex.index(item2)
+            arrProv.append(provinceList[prov])
+
+
+for i in range(arrProv.__len__() ):
+    print("i ",i)
+    myOut.insert_one(provinceList[i])
